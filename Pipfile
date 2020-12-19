@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+dagster = "*"
+dagster-pandas = "*"
+dagit = "*"
+importlib-metadata = "~=2.1.1"
+jupyter = "*"
+ghapi = "*"
+
+[dev-packages]
+pytest = "*"
+pylint = "*"
+
+[requires]
+python_version = "3.7"

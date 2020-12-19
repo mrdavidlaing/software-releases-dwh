@@ -1,0 +1,3 @@
+[submodule "examples/dagster"]
+	path = examples/dagster
+	url = https://github.com/dagster-io/dagster.git
