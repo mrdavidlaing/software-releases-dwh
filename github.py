@@ -7,11 +7,11 @@ from ghapi.page import pages
 from releases import ReleasesDataFrame
 
 
-def make_fetch_github_releases_solid(name: str, owner: str, repo: str):
+def make_fetch_github_releases_solid(product_id: str, owner: str, repo: str):
     """Return a new solid that fetches release information from GitHub
 
     Args:
-        name (str): The name of the new solid.
+        product_id (str): The unique Id for the product (also used as the name of the new solid)
         owner (str): The GitHub owner - github.com/<owner>/repo-name
         repo (str): The GitHub repo - github.com/owner-name/<repo>
 
@@ -21,7 +21,7 @@ def make_fetch_github_releases_solid(name: str, owner: str, repo: str):
     """
 
     @solid(
-        name=name,
+        name=product_id,
         config_schema={
             "github_access_token": Field(str, is_required=False, default_value=os.getenv('GITHUB_TOKEN', 'undefined'))
         },
@@ -49,6 +49,7 @@ def make_fetch_github_releases_solid(name: str, owner: str, repo: str):
                 'html_url': 'link'
             })
 
+            releases_df.insert(0, 'product_id', product_id) # Add product_id as the first column
             releases_df.release_date = pandas.to_datetime(releases_df.release_date, infer_datetime_format=True)
 
             yield Output(releases_df, output_name="releases")

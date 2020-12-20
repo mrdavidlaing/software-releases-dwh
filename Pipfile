@@ -6,10 +6,14 @@ name = "pypi"
 [packages]
 dagster = "*"
 dagster-pandas = "*"
+dagster-postgres = "*"
+dagster-cron = "*"
 dagit = "*"
 importlib-metadata = "~=2.1.1"
 jupyter = "*"
 ghapi = "*"
+sqlalchemy = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 pytest = "*"
