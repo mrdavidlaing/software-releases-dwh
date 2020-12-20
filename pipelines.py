@@ -29,10 +29,10 @@ def update_dwh_table(_):
     mode_defs=[local_mode, prod_mode],
 )
 def ingest_pipeline():
-    load_releases_to_database(
+    load_releases_to_database.alias("load_kubernetes_release_to_database")(
         releases=make_fetch_github_releases_solid('kubernetes', 'kubernetes', 'kubernetes')()
     )
-    load_releases_to_database(
+    load_releases_to_database.alias("load_dagster_release_to_database")(
         releases=make_fetch_github_releases_solid('dagster', 'dagster-io', 'dagster')()
     )
 

@@ -21,7 +21,7 @@ def make_fetch_github_releases_solid(product_id: str, owner: str, repo: str):
     """
 
     @solid(
-        name=product_id,
+        name=f"fetch_github_releases_for_{product_id}",
         config_schema={
             "github_access_token": Field(str, is_required=False, default_value=os.getenv('GITHUB_TOKEN', 'undefined'))
         },
