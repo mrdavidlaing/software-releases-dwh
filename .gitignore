@@ -127,5 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-/.dagster_home/
-/.dagster_home/
+
+#Dagit
+.dagster_home/
