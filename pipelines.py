@@ -1,8 +1,8 @@
-from dagster import pipeline, repository, solid, ModeDefinition, PresetDefinition
+from dagster import pipeline, repository, solid, ModeDefinition, PresetDefinition, configured
 
 from database import make_sql_solid
 from database_resources import postgres_db_resource, impala_db_resource
-from github import make_fetch_github_releases_solid
+from github import fetch_github_releases
 from releases import load_releases_into_database
 
 local_mode = ModeDefinition(
@@ -11,7 +11,6 @@ local_mode = ModeDefinition(
         "database": postgres_db_resource,
     },
 )
-
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -26,6 +25,16 @@ def update_dwh_table(_):
     pass
 
 
+@configured(fetch_github_releases)
+def fetch_kubernetes_releases(_):
+    return {'owner': 'kubernetes', "repo": "kubernetes"}
+
+
+@configured(fetch_github_releases)
+def fetch_dagster_releases(_):
+    return {'owner': 'dagster-io', "repo": "dagster"}
+
+
 @pipeline(
     mode_defs=[local_mode, prod_mode],
     preset_defs=[
@@ -33,7 +42,9 @@ def update_dwh_table(_):
             name="default",
             mode="local",
             run_config={
-                "resources": {"database": {"config": {"hostname": "localhost", "username": "dagster", "password": "dagster", "db_name": "test"}}},
+                "resources": {"database": {
+                    "config": {"hostname": "localhost", "username": "dagster", "password": "dagster",
+                               "db_name": "test"}}},
                 "execution": {"multiprocess": {"config": {"max_concurrent": 0}}},  # 0 -> Autodetect #CPU cores
                 "storage": {"filesystem": {}},
                 "loggers": {"console": {"config": {"log_level": "INFO"}}},
@@ -46,16 +57,14 @@ def ingest_pipeline():
     truncate_releases = make_sql_solid("truncate_releases_table", "TRUNCATE software_releases_lake.releases")
     load_kubernetes_releases = load_releases_into_database.alias("load_kubernetes_releases")
     load_dagster_releases = load_releases_into_database.alias("load_dagster_releases")
-    fetch_dagster = make_fetch_github_releases_solid('dagster', 'dagster-io', 'dagster')
-    fetch_kubernetes = make_fetch_github_releases_solid('kubernetes', 'kubernetes', 'kubernetes')
 
     # Construct pipeline
     releases_truncated = truncate_releases()
     load_kubernetes_releases(
-        releases=fetch_kubernetes(ok_to_start=releases_truncated)
+        releases=fetch_kubernetes_releases(ok_to_start=releases_truncated)
     )
     load_dagster_releases(
-        releases=fetch_dagster(ok_to_start=releases_truncated)
+        releases=fetch_dagster_releases(ok_to_start=releases_truncated)
     )
 
 
