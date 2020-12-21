@@ -107,13 +107,15 @@ def postgres_db_resource(init_context):
         db_name=db_name
     )
 
-    def _do_load(df, table_name):
+    def _do_load(df, table_name, overwrite=False):
         buffer = StringIO()
         df.to_csv(buffer, index=False, header=False)
         buffer.seek(0)
 
         with postgres_connection:
             with postgres_connection.cursor() as cursor:
+                if overwrite:
+                    cursor.execute(f"TRUNCATE {table_name}")
                 cursor.copy_from(buffer, table_name, sep=",")
 
     def _do_execute_sql(sql, data=None):

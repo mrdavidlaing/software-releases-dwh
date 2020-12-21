@@ -8,6 +8,7 @@ dagster = "*"
 dagster-pandas = "*"
 dagster-postgres = "*"
 dagster-cron = "*"
+dagster-ge = "*"
 dagit = "*"
 importlib-metadata = "~=2.1.1"
 jupyter = "*"
@@ -21,3 +22,6 @@ pylint = "*"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true # Needed for dagster-ge

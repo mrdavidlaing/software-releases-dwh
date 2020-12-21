@@ -92,9 +92,10 @@ def make_sql_solid(name, select_statement, materialization_strategy=None, table_
         context.log.info(
             "Executing sql statement:\n{sql_statement}".format(sql_statement=sql_statement)
         )
-        statusmessage, rowcount = context.resources.database.execute_sql(sql_statement)
-        context.log.info(f"Query status: {statusmessage}, row count:{rowcount}")
+        status_message, rowcount = context.resources.database.execute_sql(sql_statement)
+        context.log.info(f"Query status: {status_message}, row count:{rowcount}")
 
+        yield Output(value=rowcount, output_name="rowcount")
         yield Output(value=rowcount, output_name="rowcount")
 
     return _sql_solid

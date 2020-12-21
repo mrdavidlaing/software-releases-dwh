@@ -1,14 +1,16 @@
 from dagster import pipeline, repository, solid, ModeDefinition, PresetDefinition, configured
+from dagster_ge.factory import ge_data_context
+from dagster.utils import file_relative_path
 
-from database import make_sql_solid
 from database_resources import postgres_db_resource, impala_db_resource
 from github import fetch_github_releases
-from releases import load_releases_into_database
+from releases import persist_releases_to_database, join_releases, validate_releases
 
 local_mode = ModeDefinition(
     name="local",
     resource_defs={
         "database": postgres_db_resource,
+        "ge_data_context": ge_data_context,
     },
 )
 
@@ -16,6 +18,7 @@ prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
         "database": impala_db_resource,
+        "ge_data_context": ge_data_context,
     },
 )
 
@@ -42,9 +45,21 @@ def fetch_dagster_releases(_):
             name="default",
             mode="local",
             run_config={
-                "resources": {"database": {
-                    "config": {"hostname": "localhost", "username": "dagster", "password": "dagster",
-                               "db_name": "test"}}},
+                "resources": {
+                    "database": {
+                        "config": {
+                            "hostname": "localhost",
+                            "username": "dagster",
+                            "password": "dagster",
+                            "db_name": "test"
+                        }
+                    },
+                    "ge_data_context": {
+                        "config": {
+                            "ge_root_dir": file_relative_path(__file__, "great_expectations")
+                        }
+                    }
+                },
                 "execution": {"multiprocess": {"config": {"max_concurrent": 0}}},  # 0 -> Autodetect #CPU cores
                 "storage": {"filesystem": {}},
                 "loggers": {"console": {"config": {"log_level": "INFO"}}},
@@ -53,18 +68,13 @@ def fetch_dagster_releases(_):
     ],
 )
 def ingest_pipeline():
-    # Construct solids
-    truncate_releases = make_sql_solid("truncate_releases_table", "TRUNCATE software_releases_lake.releases")
-    load_kubernetes_releases = load_releases_into_database.alias("load_kubernetes_releases")
-    load_dagster_releases = load_releases_into_database.alias("load_dagster_releases")
+    releases = join_releases([
+        fetch_kubernetes_releases(),
+        fetch_dagster_releases()
+    ])
 
-    # Construct pipeline
-    releases_truncated = truncate_releases()
-    load_kubernetes_releases(
-        releases=fetch_kubernetes_releases(ok_to_start=releases_truncated)
-    )
-    load_dagster_releases(
-        releases=fetch_dagster_releases(ok_to_start=releases_truncated)
+    persist_releases_to_database(
+        validate_releases(releases)
     )
 
 
