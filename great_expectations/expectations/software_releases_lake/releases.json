@@ -3,14 +3,6 @@
   "expectation_suite_name": "software_releases_lake.releases",
   "expectations": [
     {
-      "expectation_type": "expect_table_row_count_to_be_between",
-      "kwargs": {
-        "max_value": 558,
-        "min_value": 457
-      },
-      "meta": {}
-    },
-    {
       "expectation_type": "expect_table_column_count_to_equal",
       "kwargs": {
         "value": 5
@@ -34,35 +26,6 @@
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "product_id"
-      },
-      "meta": {}
-    },
-    {
-      "expectation_type": "expect_column_distinct_values_to_be_in_set",
-      "kwargs": {
-        "column": "product_id",
-        "value_set": [
-          "dagster-io/dagster",
-          "kubernetes/kubernetes"
-        ]
-      },
-      "meta": {}
-    },
-    {
-      "expectation_type": "expect_column_kl_divergence_to_be_less_than",
-      "kwargs": {
-        "column": "product_id",
-        "partition_object": {
-          "values": [
-            "dagster-io/dagster",
-            "kubernetes/kubernetes"
-          ],
-          "weights": [
-            0.13385826771653545,
-            0.8661417322834646
-          ]
-        },
-        "threshold": 0.6
       },
       "meta": {}
     },
@@ -93,16 +56,6 @@
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "release_date"
-      },
-      "meta": {}
-    },
-    {
-      "expectation_type": "expect_column_values_to_be_between",
-      "kwargs": {
-        "column": "release_date",
-        "max_value": "2021-12-18 15:24:11",
-        "min_value": "2013-10-15 00:11:34",
-        "parse_strings_as_datetimes": true
       },
       "meta": {}
     }

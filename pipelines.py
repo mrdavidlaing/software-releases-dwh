@@ -38,6 +38,16 @@ def fetch_dagster_releases(_):
     return {'owner': 'dagster-io', "repo": "dagster"}
 
 
+@configured(fetch_github_releases)
+def fetch_knative_serving_releases(_):
+    return {'owner': 'knative', "repo": "serving"}
+
+
+@configured(fetch_github_releases)
+def fetch_knative_eventing_releases(_):
+    return {'owner': 'knative', "repo": "eventing"}
+
+
 @pipeline(
     mode_defs=[local_mode, prod_mode],
     preset_defs=[
@@ -68,13 +78,15 @@ def fetch_dagster_releases(_):
     ],
 )
 def ingest_pipeline():
-    releases = join_releases([
-        fetch_kubernetes_releases(),
-        fetch_dagster_releases()
-    ])
-
     persist_releases_to_database(
-        validate_releases(releases)
+        validate_releases(
+            join_releases([
+                fetch_kubernetes_releases(),
+                fetch_dagster_releases(),
+                fetch_knative_eventing_releases(),
+                fetch_knative_serving_releases(),
+            ])
+        )
     )
 
 
