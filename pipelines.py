@@ -1,4 +1,4 @@
-from dagster import pipeline, repository, solid, ModeDefinition
+from dagster import pipeline, repository, solid, ModeDefinition, PresetDefinition
 
 from database import make_sql_solid
 from database_resources import postgres_db_resource, impala_db_resource
@@ -28,6 +28,18 @@ def update_dwh_table(_):
 
 @pipeline(
     mode_defs=[local_mode, prod_mode],
+    preset_defs=[
+        PresetDefinition(
+            name="default",
+            mode="local",
+            run_config={
+                "resources": {"database": {"config": {"hostname": "localhost", "username": "dagster", "password": "dagster", "db_name": "test"}}},
+                "execution": {"multiprocess": {"config": {"max_concurrent": 0}}},  # 0 -> Autodetect #CPU cores
+                "storage": {"filesystem": {}},
+                "loggers": {"console": {"config": {"log_level": "INFO"}}},
+            },
+        )
+    ],
 )
 def ingest_pipeline():
     # Construct solids
