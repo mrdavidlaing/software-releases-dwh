@@ -1,8 +1,9 @@
 from dagster import pipeline, repository, solid, ModeDefinition
 
+from database import make_sql_solid
 from database_resources import postgres_db_resource, impala_db_resource
 from github import make_fetch_github_releases_solid
-from releases import load_releases_to_database
+from releases import load_releases_into_database
 
 local_mode = ModeDefinition(
     name="local",
@@ -29,11 +30,20 @@ def update_dwh_table(_):
     mode_defs=[local_mode, prod_mode],
 )
 def ingest_pipeline():
-    load_releases_to_database.alias("load_kubernetes_release_to_database")(
-        releases=make_fetch_github_releases_solid('kubernetes', 'kubernetes', 'kubernetes')()
+    # Construct solids
+    truncate_releases = make_sql_solid("truncate_releases_table", "TRUNCATE software_releases_lake.releases")
+    load_kubernetes_releases = load_releases_into_database.alias("load_kubernetes_releases")
+    load_dagster_releases = load_releases_into_database.alias("load_dagster_releases")
+    fetch_dagster = make_fetch_github_releases_solid('dagster', 'dagster-io', 'dagster')
+    fetch_kubernetes = make_fetch_github_releases_solid('kubernetes', 'kubernetes', 'kubernetes')
+
+    # Construct pipeline
+    releases_truncated = truncate_releases()
+    load_kubernetes_releases(
+        releases=fetch_kubernetes(ok_to_start=releases_truncated)
     )
-    load_releases_to_database.alias("load_dagster_release_to_database")(
-        releases=make_fetch_github_releases_solid('dagster', 'dagster-io', 'dagster')()
+    load_dagster_releases(
+        releases=fetch_dagster(ok_to_start=releases_truncated)
     )
 
 

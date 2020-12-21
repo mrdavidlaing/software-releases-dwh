@@ -1,6 +1,4 @@
-CREATE USER dagster WITH PASSWORD 'dagster';
-
-CREATE TABLE IF NOT EXISTS releases (
+CREATE TABLE IF NOT EXISTS software_releases_lake.releases (
     product_id TEXT,
     version TEXT,
     name TEXT,
@@ -9,4 +7,6 @@ CREATE TABLE IF NOT EXISTS releases (
 );
 
 --TODO: Introduce roles/groups
-ALTER TABLE releases OWNER TO dagster;
+CREATE USER dagster WITH PASSWORD 'dagster';
+GRANT USAGE ON SCHEMA software_releases_lake TO dagster;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA software_releases_lake TO dagster;

@@ -4,9 +4,9 @@ from collections import namedtuple
 from urllib.parse import urlparse
 
 import sqlalchemy
-from dagster import Field, IntSource, StringSource, resource
+from dagster import Field, IntSource, StringSource, resource, Output
 
-DatabaseInfo = namedtuple("DatabaseInfo", "connection load_table host db_name")
+DatabaseInfo = namedtuple("DatabaseInfo", "connection execute_sql load_table host db_name")
 
 
 # def create_impala_db_url(username, password, hostname, port, db_name, jdbc=True):
@@ -116,8 +116,15 @@ def postgres_db_resource(init_context):
             with postgres_connection.cursor() as cursor:
                 cursor.copy_from(buffer, table_name, sep=",")
 
+    def _do_execute_sql(sql, data=None):
+        with postgres_connection:
+            with postgres_connection.cursor() as cursor:
+                cursor.execute(sql, data)
+                return cursor.statusmessage, cursor.rowcount
+
     return DatabaseInfo(
         connection=postgres_connection,
+        execute_sql=_do_execute_sql,
         load_table=_do_load,
         host=host,
         db_name=db_name,

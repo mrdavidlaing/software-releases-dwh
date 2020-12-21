@@ -16,12 +16,13 @@ ReleasesDataFrame = create_dagster_pandas_dataframe_type(
 
 @solid(
     config_schema={
-        "releases_table": Field(str, is_required=False, default_value="releases")
+        "releases_table": Field(str, is_required=False, default_value="software_releases_lake.releases")
     },
     output_defs=[OutputDefinition(name="releases_table", dagster_type=String)],
     required_resource_keys={"database"},
+    tags={"kind": "load_into_database"},
 )
-def load_releases_to_database(context, releases: ReleasesDataFrame):
+def load_releases_into_database(context, releases: ReleasesDataFrame):
     releases_table = context.solid_config["releases_table"]
     context.resources.database.load_table(releases, releases_table)
 

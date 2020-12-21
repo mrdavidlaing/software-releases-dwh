@@ -1,7 +1,7 @@
 import os
 import ghapi.core
 import pandas
-from dagster import solid, Field, OutputDefinition, Output
+from dagster import solid, Field, OutputDefinition, Output, InputDefinition
 from ghapi.page import pages
 
 from releases import ReleasesDataFrame
@@ -21,13 +21,18 @@ def make_fetch_github_releases_solid(product_id: str, owner: str, repo: str):
     """
 
     @solid(
-        name=f"fetch_github_releases_for_{product_id}",
+        name=f"fetch_{product_id}",
         config_schema={
             "github_access_token": Field(str, is_required=False, default_value=os.getenv('GITHUB_TOKEN', 'undefined'))
         },
+        input_defs=[
+            InputDefinition(name="ok_to_start", default_value=True,
+                            description="Used to chain to other solids.  Value ignored")
+        ],
         output_defs=[OutputDefinition(name="releases", dagster_type=ReleasesDataFrame)],
+        tags={"kind": "github_releases"},
     )
-    def _fetch_github_releases(context):
+    def _fetch_github_releases(context, ok_to_start):  # pylint: disable=unused-argument
         if context.solid_config["github_access_token"] == 'undefined':
             raise LookupError("Must have GITHUB_TOKEN environment variable or configure github_access_token")
 
