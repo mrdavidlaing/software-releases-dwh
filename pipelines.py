@@ -59,7 +59,7 @@ def fetch_knative_eventing_releases(_):
             mode="local",
             run_config={
                 "resources": {
-                    "database": {
+                    "datamart": {
                         "config": {
                             "hostname": "localhost",
                             "username": "dagster",

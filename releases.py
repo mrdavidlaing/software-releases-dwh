@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pandas
 from dagster import solid, OutputDefinition, String, AssetMaterialization, EventMetadataEntry, Output, \
-    InputDefinition, Field, Dict, composite_solid, List
+    InputDefinition, Field, Dict, composite_solid, List, AssetKey
 from dagster_ge import ge_validation_solid_factory
 from dagster_pandas import create_dagster_pandas_dataframe_type, PandasColumn
 
@@ -41,18 +41,18 @@ def join_releases(_, release_list: List[ReleasesDataFrame]) -> ReleasesDataFrame
     tags={"kind": "add_to_lake"},
 )
 def add_releases_to_lake(context, releases, partition_key="NOW_UTC"):
+    datalake_uri = context.resources.datalake.uri
+    asset_type = "releases"
     if partition_key == "NOW_UTC":
         partition_key = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-    asset_key = context.solid_config["releases_asset_key"]
 
-    asset_path = context.resources.datalake.add(releases, asset_key, partition_key)
+    asset_path = context.resources.datalake.add(releases, asset_type, partition_key)
 
     yield AssetMaterialization(
-        asset_key=f"datalake:{asset_key}",
-        description=f"Release partition: {partition_key} in data lake: {context.resources.datalake.uri}",
+        asset_key=AssetKey(["software_releases_datalake", datalake_uri, asset_type]),
         metadata_entries=[
-            EventMetadataEntry.text(context.resources.datalake.uri, "datalake_uri"),
-            EventMetadataEntry.text(asset_key, "asset_key"),
+            EventMetadataEntry.text(datalake_uri, "datalake_uri"),
+            EventMetadataEntry.text(asset_type, "asset_type"),
             EventMetadataEntry.text(partition_key, "partition_key"),
             EventMetadataEntry.text(asset_path, "asset_path"),
             EventMetadataEntry.int(releases.shape[0], "rows"),

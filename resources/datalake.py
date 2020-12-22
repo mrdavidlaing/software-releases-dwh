@@ -1,4 +1,5 @@
 import os
+from google.cloud import storage
 from collections import namedtuple
 
 from dagster import Field, StringSource, resource
@@ -15,12 +16,12 @@ DatalakeInfo = namedtuple("DatalakeInfo", "uri add")
 def fs_datalake_resource(init_context):
     base_path = os.path.abspath(init_context.resource_config["base_path"])
 
-    def _do_add(df: DataFrame, asset_key: str, partition_key: str):
-        csv_filename = f"{asset_key}_{partition_key}.csv"
+    def _do_add(df: DataFrame, asset_type: str, partition_key: str):
+        csv_filename = f"{asset_type}_{partition_key}.csv"
         csv_path = os.path.join(base_path, csv_filename)
         df.to_csv(csv_path, index=False)
 
-        return csv_filename
+        return csv_path
 
     return DatalakeInfo(
         uri=base_path,
@@ -34,18 +35,16 @@ def fs_datalake_resource(init_context):
     }
 )
 def gcs_datalake_resource(init_context):
-    bucket = os.path.abspath(init_context.resource_config["bucket"])
+    client = storage.Client()
+    bucket = client.get_bucket(init_context.resource_config["bucket"])
 
-    def _do_add(df: DataFrame, asset_key: str, partition_key: str):
-        raise NotImplemented
+    def _do_add(df: DataFrame, asset_type: str, partition_key: str):
+        csv_filename = f"{asset_type}_{partition_key}.csv"
+        bucket.blob(csv_filename).upload_from_string(df.to_csv(index=False), 'text/csv')
 
-        csv_filename = f"{asset_key}_{partition_key}.csv"
-        csv_path = os.path.join(bucket, csv_filename)
-        df.to_csv(csv_path, index=False)
-
-        return csv_filename
+        return f"gs://{bucket.name}/{csv_filename}"
 
     return DatalakeInfo(
-        uri=bucket,
+        uri=f"gs://{bucket.name}",
         add=_do_add,
     )
