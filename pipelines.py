@@ -2,14 +2,16 @@ from dagster import pipeline, repository, solid, ModeDefinition, PresetDefinitio
 from dagster_ge.factory import ge_data_context
 from dagster.utils import file_relative_path
 
-from database_resources import postgres_db_resource, impala_db_resource
 from github import fetch_github_releases
-from releases import persist_releases_to_database, join_releases, validate_releases
+from releases import add_releases_to_lake, validate_releases, join_releases
+from resources.datamart import postgres_datamart_resource, bigquery_datamart_resource
+from resources.datalake import fs_datalake_resource, gcs_datalake_resource
 
 local_mode = ModeDefinition(
     name="local",
     resource_defs={
-        "database": postgres_db_resource,
+        "datalake": fs_datalake_resource,
+        "database": postgres_datamart_resource,
         "ge_data_context": ge_data_context,
     },
 )
@@ -17,6 +19,7 @@ local_mode = ModeDefinition(
 prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
+        "datalake": gcs_datalake_resource,
         "database": impala_db_resource,
         "ge_data_context": ge_data_context,
     },
@@ -64,6 +67,11 @@ def fetch_knative_eventing_releases(_):
                             "db_name": "test"
                         }
                     },
+                    "datalake": {
+                        "config": {
+                            "base_path": file_relative_path(__file__, 'tmp/datalake'),
+                        }
+                    },
                     "ge_data_context": {
                         "config": {
                             "ge_root_dir": file_relative_path(__file__, "great_expectations")
@@ -78,7 +86,7 @@ def fetch_knative_eventing_releases(_):
     ],
 )
 def ingest_pipeline():
-    persist_releases_to_database(
+    add_releases_to_lake(
         validate_releases(
             join_releases([
                 fetch_kubernetes_releases(),

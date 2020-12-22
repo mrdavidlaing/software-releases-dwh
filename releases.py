@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
+
 import pandas
-from dagster import solid, OutputDefinition, String, AssetMaterialization, EventMetadataEntry, Output, InputDefinition, \
-    Field, Dict, composite_solid, List
+from dagster import solid, OutputDefinition, String, AssetMaterialization, EventMetadataEntry, Output, \
+    InputDefinition, Field, Dict, composite_solid, List
 from dagster_ge import ge_validation_solid_factory
 from dagster_pandas import create_dagster_pandas_dataframe_type, PandasColumn
 
@@ -23,27 +25,40 @@ def join_releases(_, release_list: List[ReleasesDataFrame]) -> ReleasesDataFrame
 
 @solid(
     config_schema={
-        "releases_table": Field(str, is_required=False, default_value="software_releases_lake.releases")
+        "releases_asset_key": Field(str, is_required=False, default_value="releases")
     },
     description="Persists releases to database (overwriting any existing data)",
-    output_defs=[OutputDefinition(name="releases_table", dagster_type=String)],
-    required_resource_keys={"database"},
-    tags={"kind": "load_into_database"},
+    input_defs=[
+        InputDefinition(
+            name="releases", dagster_type=ReleasesDataFrame,
+            description="Releases to persist"),
+        InputDefinition(
+            name="partition_key", dagster_type=String, default_value="NOW_UTC",
+            description="Defaults to current UTC timestamp in YYYYMMDDHHMMSS format"),
+    ],
+    output_defs=[OutputDefinition(name="asset_path", dagster_type=String)],
+    required_resource_keys={"datalake"},
+    tags={"kind": "add_to_lake"},
 )
-def persist_releases_to_database(context, releases: ReleasesDataFrame):
-    releases_table = context.solid_config["releases_table"]
-    context.resources.database.load_table(releases, releases_table, overwrite=True)
+def add_releases_to_lake(context, releases, partition_key="NOW_UTC"):
+    if partition_key == "NOW_UTC":
+        partition_key = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    asset_key = context.solid_config["releases_asset_key"]
+
+    asset_path = context.resources.datalake.add(releases, asset_key, partition_key)
 
     yield AssetMaterialization(
-        asset_key=f"table:{releases_table}",
-        description=f"Persisted table {releases_table} in database configured in the database resource.",
+        asset_key=f"datalake:{asset_key}",
+        description=f"Release partition: {partition_key} in data lake: {context.resources.datalake.uri}",
         metadata_entries=[
-            EventMetadataEntry.text(label="host", text=context.resources.database.host),
-            EventMetadataEntry.text(label="db_name", text=context.resources.database.db_name),
-            EventMetadataEntry.text(label="releases_table", text=releases_table),
+            EventMetadataEntry.text(context.resources.datalake.uri, "datalake_uri"),
+            EventMetadataEntry.text(asset_key, "asset_key"),
+            EventMetadataEntry.text(partition_key, "partition_key"),
+            EventMetadataEntry.text(asset_path, "asset_path"),
+            EventMetadataEntry.int(releases.shape[0], "rows"),
         ],
     )
-    yield Output(value=releases_table, output_name="releases_table")
+    yield Output(value=asset_path, output_name="asset_path")
 
 
 ge_releases_validation = ge_validation_solid_factory(

@@ -1,11 +1,89 @@
-from dagster import (
-    InputDefinition,
-    Output,
-    OutputDefinition,
-    check,
-    solid, ExpectationResult, EventMetadataEntry,
-)
+from collections import namedtuple
+from io import StringIO
+
+import psycopg2
+from dagster import Field, IntSource, StringSource, resource, Output, InputDefinition, OutputDefinition, check, solid
 from dagster.core.types.dagster_type import create_string_type
+
+DatamartInfo = namedtuple("DatabaseInfo", "connection execute_sql load_table host db_name")
+
+
+@resource(
+    {
+        'project': Field(
+            StringSource, description=
+            """Project ID for the project which the client acts on behalf of. Will be passed
+               when creating a dataset / job. If not passed, falls back to the default inferred from the
+               environment.""",
+            is_required=False,
+        ),
+        'location': Field(
+            StringSource,
+            description="(Optional) Default location for jobs / datasets / tables.",
+            is_required=False,
+        )
+    }
+)
+def bigquery_datamart_resource(init_context):
+    raise NotImplemented()
+
+
+def create_postgres_connection(username, password, hostname, port, db_name):
+    return psycopg2.connect(
+        user=username,
+        password=password,
+        host=hostname,
+        port=port,
+        database=db_name,
+    )
+
+
+@resource(
+    {
+        "username": Field(StringSource),
+        "password": Field(StringSource),
+        "hostname": Field(StringSource),
+        "port": Field(IntSource, is_required=False, default_value=5432),
+        "db_name": Field(StringSource),
+    }
+)
+def postgres_datamart_resource(init_context):
+    host = init_context.resource_config["hostname"]
+    db_name = init_context.resource_config["db_name"]
+
+    postgres_connection = create_postgres_connection(
+        username=init_context.resource_config["username"],
+        password=init_context.resource_config["password"],
+        hostname=host,
+        port=init_context.resource_config["port"],
+        db_name=db_name
+    )
+
+    def _do_load(df, table_name, overwrite=False):
+        buffer = StringIO()
+        df.to_csv(buffer, index=False, header=False)
+        buffer.seek(0)
+
+        with postgres_connection:
+            with postgres_connection.cursor() as cursor:
+                if overwrite:
+                    cursor.execute(f"TRUNCATE {table_name}")
+                cursor.copy_from(buffer, table_name, sep=",")
+
+    def _do_execute_sql(sql, data=None):
+        with postgres_connection:
+            with postgres_connection.cursor() as cursor:
+                cursor.execute(sql, data)
+                return cursor.statusmessage, cursor.rowcount
+
+    return DatamartInfo(
+        connection=postgres_connection,
+        execute_sql=_do_execute_sql,
+        load_table=_do_load,
+        host=host,
+        db_name=db_name,
+    )
+
 
 SqlTableName = create_string_type("SqlTableName", description="The name of a database table")
 
@@ -54,7 +132,7 @@ def make_sql_solid(name, select_statement, materialization_strategy=None, table_
         "The string name of the new table created by the solid"
         if materialization_strategy == "table"
         else "The materialized SQL statement. If the materialization_strategy is "
-        "'table', this is the string name of the new table created by the solid."
+             "'table', this is the string name of the new table created by the solid."
     )
 
     description = """This solid executes the following SQL statement:
@@ -72,10 +150,11 @@ def make_sql_solid(name, select_statement, materialization_strategy=None, table_
         name=name,
         input_defs=input_defs,
         output_defs=[
+            OutputDefinition(name="status_message", description="Status of SQL query execution"),
             OutputDefinition(name="rowcount", description="The number of rows affected by the SQL query")
         ],
         description=description,
-        required_resource_keys={"database"},
+        required_resource_keys={"datamart"},
         tags={"kind": "sql", "sql": sql_statement},
     )
     def _sql_solid(context, **input_defs):  # pylint: disable=unused-argument
@@ -92,10 +171,10 @@ def make_sql_solid(name, select_statement, materialization_strategy=None, table_
         context.log.info(
             "Executing sql statement:\n{sql_statement}".format(sql_statement=sql_statement)
         )
-        status_message, rowcount = context.resources.database.execute_sql(sql_statement)
+        status_message, rowcount = context.resources.datamart.execute_sql(sql_statement)
         context.log.info(f"Query status: {status_message}, row count:{rowcount}")
 
-        yield Output(value=rowcount, output_name="rowcount")
+        yield Output(value=status_message, output_name="status_message")
         yield Output(value=rowcount, output_name="rowcount")
 
     return _sql_solid
