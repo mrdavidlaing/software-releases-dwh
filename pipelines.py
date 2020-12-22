@@ -20,7 +20,7 @@ prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
         "datalake": gcs_datalake_resource,
-        "database": impala_db_resource,
+        "database": bigquery_datamart_resource,
         "ge_data_context": ge_data_context,
     },
 )
