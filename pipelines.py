@@ -51,6 +51,16 @@ def fetch_knative_eventing_releases(_):
     return {'owner': 'knative', "repo": "eventing"}
 
 
+@configured(fetch_github_releases)
+def fetch_cloudfoundry_cf_deployment_releases(_):
+    return {'owner': 'cloudfoundry', "repo": "cf-deployment"}
+
+
+@configured(fetch_github_releases)
+def fetch_cloudfoundry_cf_for_k8s_releases(_):
+    return {'owner': 'cloudfoundry', "repo": "cf-for-k8s"}
+
+
 @pipeline(
     mode_defs=[local_mode, prod_mode],
     preset_defs=[
@@ -119,6 +129,8 @@ def ingest_pipeline():
                 fetch_dagster_releases(),
                 fetch_knative_eventing_releases(),
                 fetch_knative_serving_releases(),
+                fetch_cloudfoundry_cf_deployment_releases(),
+                fetch_cloudfoundry_cf_for_k8s_releases(),
             ])
         )
     )
