@@ -25,31 +25,27 @@ def join_releases(_, release_list: List[ReleasesDataFrame]) -> ReleasesDataFrame
 
 @solid(
     config_schema={
-        "releases_asset_key": Field(str, is_required=False, default_value="releases")
+        "asset_type": Field(str, is_required=False, default_value="releases")
     },
     description="Persists releases to database (overwriting any existing data)",
     input_defs=[
         InputDefinition(
             name="releases", dagster_type=ReleasesDataFrame,
-            description="Releases to persist"),
-        InputDefinition(
-            name="partition_key", dagster_type=String, default_value="NOW_UTC",
-            description="Defaults to current UTC timestamp in YYYYMMDDHHMMSS format"),
+            description="Releases to persist")
     ],
     output_defs=[OutputDefinition(name="asset_path", dagster_type=String)],
     required_resource_keys={"datalake"},
     tags={"kind": "add_to_lake"},
 )
-def add_releases_to_lake(context, releases, partition_key="NOW_UTC"):
+def add_releases_to_lake(context, releases):
     datalake_uri = context.resources.datalake.uri
-    asset_type = "releases"
-    if partition_key == "NOW_UTC":
-        partition_key = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    asset_type = context.solid_config["asset_type"]
+    partition_key = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     asset_path = context.resources.datalake.add(releases, asset_type, partition_key)
 
     yield AssetMaterialization(
-        asset_key=AssetKey(["software_releases_datalake", datalake_uri, asset_type]),
+        asset_key=AssetKey([datalake_uri, asset_type]),
         metadata_entries=[
             EventMetadataEntry.text(datalake_uri, "datalake_uri"),
             EventMetadataEntry.text(asset_type, "asset_type"),

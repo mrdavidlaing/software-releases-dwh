@@ -11,7 +11,7 @@ local_mode = ModeDefinition(
     name="local",
     resource_defs={
         "datalake": fs_datalake_resource,
-        "database": postgres_datamart_resource,
+        "datamart": postgres_datamart_resource,
         "ge_data_context": ge_data_context,
     },
 )
@@ -20,7 +20,7 @@ prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
         "datalake": gcs_datalake_resource,
-        "database": bigquery_datamart_resource,
+        "datamart": bigquery_datamart_resource,
         "ge_data_context": ge_data_context,
     },
 )
@@ -70,6 +70,32 @@ def fetch_knative_eventing_releases(_):
                     "datalake": {
                         "config": {
                             "base_path": file_relative_path(__file__, 'tmp/datalake'),
+                        }
+                    },
+                    "ge_data_context": {
+                        "config": {
+                            "ge_root_dir": file_relative_path(__file__, "great_expectations")
+                        }
+                    }
+                },
+                "execution": {"multiprocess": {"config": {"max_concurrent": 0}}},  # 0 -> Autodetect #CPU cores
+                "storage": {"filesystem": {}},
+                "loggers": {"console": {"config": {"log_level": "INFO"}}},
+            },
+        ),
+        PresetDefinition(
+            name="GCP",
+            mode="prod",
+            run_config={
+                "resources": {
+                    "datamart": {
+                        "config": {
+                            "project": "mrdavidlaing",
+                        }
+                    },
+                    "datalake": {
+                        "config": {
+                            "bucket": "software_releases_datalake",
                         }
                     },
                     "ge_data_context": {

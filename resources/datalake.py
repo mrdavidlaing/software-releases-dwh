@@ -39,7 +39,7 @@ def gcs_datalake_resource(init_context):
     bucket = client.get_bucket(init_context.resource_config["bucket"])
 
     def _do_add(df: DataFrame, asset_type: str, partition_key: str):
-        csv_filename = f"{asset_type}_{partition_key}.csv"
+        csv_filename = f"{asset_type}/partition_key={partition_key}/{asset_type}_{partition_key}.csv"
         bucket.blob(csv_filename).upload_from_string(df.to_csv(index=False), 'text/csv')
 
         return f"gs://{bucket.name}/{csv_filename}"

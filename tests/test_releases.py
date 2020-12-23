@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas
 from dagster import execute_solid, ModeDefinition, file_relative_path
@@ -24,7 +24,7 @@ test_run_config = {
     "solids": {
         "add_releases_to_lake": {
             "config": {
-                "releases_asset_key": "test-releases"
+                "asset_type": "test-releases"
             }
         }
     }
@@ -50,5 +50,6 @@ def test_add_releases_to_lake():
     )
 
     assert result.success
-    assert re.match(r'test-releases\_\d+\-\d+\.csv', result.output_value('asset_path'))
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    assert f'test-releases_{today}.csv' in result.output_value('asset_path')
 
