@@ -1,36 +1,15 @@
-import re
 from datetime import datetime, timezone
 
 import pandas
-from dagster import execute_solid, ModeDefinition, file_relative_path
+import pytest
+from dagster import execute_solid
 
 from releases import add_releases_to_lake
-from resources.datalake import fs_datalake_resource
-
-test_mode = ModeDefinition(
-    name="test",
-    resource_defs={
-        "datalake": fs_datalake_resource,
-    },
-)
-test_run_config = {
-    "resources": {
-        "datalake": {
-            "config": {
-                "base_path": file_relative_path(__file__, '../tmp/datalake'),
-            }
-        }
-    },
-    "solids": {
-        "add_releases_to_lake": {
-            "config": {
-                "asset_type": "test-releases"
-            }
-        }
-    }
-}
+from tests.conftest import test_mode, test_run_config
 
 
+@pytest.mark.usefixtures("cleanup_datalake")
+@pytest.mark.asset_type("test-releases")
 def test_add_releases_to_lake():
     sample_releases = pandas.DataFrame.from_dict({
         'product_id': ['knative/serving', 'knative/serving', 'knative/serving'],
@@ -46,10 +25,20 @@ def test_add_releases_to_lake():
         add_releases_to_lake,
         input_values={'releases': sample_releases},
         mode_def=test_mode,
-        run_config=test_run_config
+        run_config={
+            **test_run_config,
+            **{
+                "solids": {
+                    "add_releases_to_lake": {
+                        "config": {
+                            "asset_type": "test-releases"
+                        }
+                    }
+                }
+            }
+        }
     )
 
     assert result.success
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     assert f'test-releases_{today}.csv' in result.output_value('asset_path')
-

@@ -1,25 +1,8 @@
-import re
-
 import pandas
-from dagster import execute_solid, ModeDefinition, file_relative_path, solid
+import pytest
+from dagster import execute_solid, solid
 
-from resources.datalake import fs_datalake_resource
-
-test_mode = ModeDefinition(
-    name="test",
-    resource_defs={
-        "datalake": fs_datalake_resource,
-    },
-)
-test_run_config = {
-    "resources": {
-        "datalake": {
-            "config": {
-                "base_path": file_relative_path(__file__, '../tmp/datalake'),
-            }
-        }
-    }
-}
+from tests.conftest import test_mode, test_run_config
 
 
 @solid(required_resource_keys={"datalake"})
@@ -34,6 +17,8 @@ def example_add_solid(context):
     return context.resources.datalake.add(df, asset_key, partition_key)
 
 
+@pytest.mark.usefixtures("cleanup_datalake")
+@pytest.mark.asset_type("test-asset")
 def test_fs_datalake_resource():
     result = execute_solid(
         example_add_solid,
@@ -42,4 +27,4 @@ def test_fs_datalake_resource():
     )
 
     assert result.success
-    assert re.match(r'test-asset\_partition-one.csv', result.output_value())
+    assert 'test-asset_partition-one.csv' in result.output_value()
