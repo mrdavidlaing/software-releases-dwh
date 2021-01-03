@@ -17,6 +17,9 @@ sqlalchemy = "*"
 psycopg2-binary = "*"
 dagster-gcp = "*"
 google-cloud-storage = "*"
+dagster-k8s = "*"
+dagster-celery-k8s = "*"
+dagster-celery = {extras = ["kubernetes"], version = "*"}
 
 [dev-packages]
 pytest = "*"

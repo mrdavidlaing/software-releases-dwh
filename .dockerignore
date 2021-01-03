@@ -1,0 +1,9 @@
+**/.git
+**/.idea
+**/.ipynb_checkpoints
+**/.pytest_cache
+**/tmp
+**/examples
+**/dagster_instances/local
+**/secrets
+**/uncommitted

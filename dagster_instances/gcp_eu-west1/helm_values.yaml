@@ -1,0 +1,43 @@
+dagit:
+  image:
+    repository: 'eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster'
+    tag: 'latest'
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+pipeline_run:
+  image:
+    repository: 'eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster'
+    tag: 'latest'
+
+celery:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+scheduler:
+  k8sEnabled: true
+
+extraManifests:
+  - apiVersion: v1
+    kind: LimitRange
+    metadata:
+      name: default-container-resources
+    spec:
+      limits:
+        - default:
+            cpu: 200m
+            memory: 256Mi
+          defaultRequest:
+            cpu: 200m
+            memory: 256Mi
+          type: Container
