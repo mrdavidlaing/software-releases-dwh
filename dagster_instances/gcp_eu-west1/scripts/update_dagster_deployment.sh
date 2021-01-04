@@ -72,10 +72,12 @@ function build_and_push_container() {
 
   pretty_print "====> Building & pushing new container: eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:$cal_version" "$ta_bold"
   pushd $(realpath "$script_dir/../../../")
-    docker build -t eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:$cal_version -f "$script_dir/../Dockerfile" .
+    docker build -f "$script_dir/../Dockerfile" . \
+    --tag eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:$cal_version \
+    --tag eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:latest
   popd
   docker push eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:$cal_version
-
+  docker push eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:latest
 }
 
 function target_europe_belgium_k8s_cluster(){
