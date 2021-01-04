@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
 
-# A best practices Bash script template with many useful functions. This file
-# sources in the bulk of the functions from the source.sh file which it expects
-# to be in the same directory. Only those functions which are likely to need
-# modification are present in this file. This is a great combination if you're
-# writing several scripts! By pulling in the common functions you'll minimise
-# code duplication, as well as ease any potential updates to shared functions.
-
 # Enable xtrace if the DEBUG environment variable is set
 if [[ ${DEBUG-} =~ ^1|yes|true$ ]]; then
     set -o xtrace       # Trace the execution of the script (debug)
