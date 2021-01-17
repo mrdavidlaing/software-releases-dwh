@@ -2,6 +2,8 @@
 **/.idea
 **/.ipynb_checkpoints
 **/.pytest_cache
+**/.dagster_home
+**/_whaler
 **/tmp
 **/examples
 **/dagster_instances/local

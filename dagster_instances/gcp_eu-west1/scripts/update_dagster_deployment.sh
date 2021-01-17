@@ -63,7 +63,7 @@ function parse_params() {
 function build_and_push_container() {
   cal_version=$(date +'%Y-%m-%d.%s')
 
-  pretty_print "====> Building & pushing new container: eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:$cal_version" "$ta_bold"
+  pretty_print "====> Building & pushing new image: eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:$cal_version" "$ta_bold"
   pushd $(realpath "$script_dir/../../../")
     docker build -f "$script_dir/../Dockerfile" . \
     --tag eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:$cal_version \
@@ -83,7 +83,7 @@ function update_helm_deployment() {
   if [ -z "${skip_build-}" ]; then # If skip_build NOT set
     pretty_print "====> Updating helm deployment: dagster (new image tag=$cal_version)" "$ta_bold"
     helm upgrade --namespace dagster --install dagster dagster/dagster -f "$script_dir/../helm_values.yaml" \
-      --set dagit.image.tag="$cal_version" --set pipeline_run.image.tag="$cal_version" \
+      --set userDeployments.deployments[0].image.tag="$cal_version" \
       --wait
   else
      pretty_print "====> Updating helm deployment: dagster" "$ta_bold"

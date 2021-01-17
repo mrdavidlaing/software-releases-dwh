@@ -133,3 +133,6 @@ secrets/
 
 #Dagit
 .dagster_home/
+
+#Whaler
+_whaler/

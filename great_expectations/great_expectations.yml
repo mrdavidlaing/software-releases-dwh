@@ -50,7 +50,7 @@ datasources:
 # https://docs.greatexpectations.io/en/latest/guides/how_to_guides/configuring_data_contexts/how_to_use_a_yaml_file_or_environment_variables_to_populate_credentials.html
 
 
-config_variables_file_path: uncommitted/config_variables.yml
+config_variables_file_path: config_variables.yml
 
 # The plugins_directory will be added to your python path for custom modules
 # used to override and extend Great Expectations.

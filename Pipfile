@@ -5,21 +5,17 @@ name = "pypi"
 
 [packages]
 dagster = "*"
-dagster-pandas = "*"
-dagster-postgres = "*"
-dagster-cron = "*"
-dagster-ge = "*"
 dagit = "*"
+dagster-ge = "*"
+dagster-pandas = "*"
+dagster-gcp = "*"
+dagster-postgres = "*"
 importlib-metadata = "~=2.1.1"
 jupyter = "*"
 ghapi = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
-dagster-gcp = "*"
 google-cloud-storage = "*"
-dagster-k8s = "*"
-dagster-celery-k8s = "*"
-dagster-celery = {extras = ["kubernetes"], version = "*"}
 
 [dev-packages]
 pytest = "*"

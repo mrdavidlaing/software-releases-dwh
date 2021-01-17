@@ -1,8 +1,8 @@
-from dagster import pipeline, repository, solid, ModeDefinition, PresetDefinition, configured, default_executors, schedule
+from dagster import pipeline, repository, solid, ModeDefinition, PresetDefinition, configured, default_executors, schedule, fs_io_manager
 from dagster.utils import file_relative_path
 from dagster_celery_k8s import celery_k8s_job_executor
 from dagster_gcp import gcs_resource
-from dagster_gcp.gcs import gcs_plus_default_intermediate_storage_defs
+from dagster_gcp.gcs import gcs_plus_default_intermediate_storage_defs, gcs_pickle_io_manager
 from dagster_ge.factory import ge_data_context
 
 from github import fetch_github_releases
@@ -16,6 +16,7 @@ local_mode = ModeDefinition(
         "datalake": fs_datalake_resource,
         "datamart": postgres_datamart_resource,
         "ge_data_context": ge_data_context,
+        'io_manager': fs_io_manager
     },
 )
 
@@ -26,7 +27,8 @@ prod_mode = ModeDefinition(
         "datalake": gcs_datalake_resource,
         "datamart": bigquery_datamart_resource,
         "ge_data_context": ge_data_context,
-        'gcs': gcs_resource
+        'gcs': gcs_resource,
+        'io_manager': gcs_pickle_io_manager
     },
     executor_defs=default_executors + [celery_k8s_job_executor],
 )
@@ -95,7 +97,6 @@ def fetch_cloudfoundry_cf_for_k8s_releases(_):
                     }
                 },
                 "execution": {"multiprocess": {"config": {"max_concurrent": 0}}},  # 0 -> Autodetect #CPU cores
-                "storage": {"filesystem": {}},
                 "loggers": {"console": {"config": {"log_level": "INFO"}}},
             },
         ),
@@ -104,9 +105,10 @@ def fetch_cloudfoundry_cf_for_k8s_releases(_):
             mode="prod",
             run_config={
                 "resources": {
-                    "datamart": {
+                    "io_manager": {
                         "config": {
-                            "project": "mrdavidlaing",
+                            "gcs_bucket": "software_releases_datalake",
+                            "gcs_prefix": "intermediate-storage/"
                         }
                     },
                     "datalake": {
@@ -126,13 +128,9 @@ def fetch_cloudfoundry_cf_for_k8s_releases(_):
                             "job_namespace": "dagster",
                             "env_config_maps": ["dagster-pipeline-env"],
                             "env_secrets": ["software-releases-dwh-secrets"],
-                            "job_image": "eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster:latest",
-                            "image_pull_policy": "Always",
-
                         }
                     }
                 },
-                "intermediate_storage": {"gcs": {"config": {"gcs_bucket": "software_releases_datalake"}}},
                 "loggers": {"console": {"config": {"log_level": "INFO"}}},
             },
         )
@@ -161,7 +159,8 @@ def populate_dwh_pipeline():
 
 
 @schedule(
-    cron_schedule="0 6 * * *", pipeline_name="ingest_pipeline", mode="prod"
+    cron_schedule="0 6 * * *",
+    pipeline_name="ingest_pipeline", mode="prod"
 )  # Every day at 06:00
 def daily_execute_ingest_pipeline(_context):
     return {

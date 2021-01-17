@@ -1,20 +1,33 @@
-# Use the official lightweight Python image.
-# https://hub.docker.com/_/python
-FROM python:3.7-slim
+ARG BASE_IMAGE=python:3.7-slim
+FROM "${BASE_IMAGE}"
 
-# Install extra dependencies needed by Dagster
-RUN set -eux; \
-	apt-get update; \
-	apt-get install -y --no-install-recommends \
-		cron \
-	; \
-	rm -rf /var/lib/apt/lists/*
+ARG DAGSTER_VERSION=0.10.0
 
-# Install dependencies - is a separate layer to speed up future builds
-RUN pip install pipenv
+# ==> Add Dagster layer
+RUN \
+# Dagster
+    pip install \
+      dagster==${DAGSTER_VERSION} \
+      dagster-postgres==${DAGSTER_VERSION} \
+      dagster-celery[flower,kubernetes]==${DAGSTER_VERSION} \
+      dagster-k8s==${DAGSTER_VERSION} \
+      dagster-celery-k8s==${DAGSTER_VERSION} \
+# Cleanup
+    &&  rm -rf /var/lib/apt/lists/ \
+    &&  rm -rf /root/.cache  \
+    &&  rm -rf /usr/lib/python2.7 \
+    &&  rm -rf /usr/lib/x86_64-linux-gnu/guile \
+    &&  find / -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
+
+# ==> Add user code dependencies - in a separate layer to speed up future builds
 COPY Pipfile* /
-RUN cd / && pipenv lock --requirements > requirements.txt
-RUN pip install -r /requirements.txt
+RUN     pip install pipenv \
+    &&  cd / && pipenv lock --requirements > requirements.txt \
+    &&  pip install -r /requirements.txt \
+# Cleanup
+    &&  rm -rf /root/.cache \
+    &&  find / -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
 
-COPY . /
-WORKDIR /
+# ==> Add user code
+COPY . /dagster_workspace
+WORKDIR /dagster_workspace
