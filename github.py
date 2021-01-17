@@ -34,12 +34,14 @@ def fetch_github_releases(context):
             f" ({api.limit_rem} API calls remaining of quota)"
         )
         releases_df = pandas.DataFrame.from_records(releases, columns=[
-            'tag_name', 'name', 'published_at', 'html_url'
+            'tag_name', 'name', 'published_at', 'html_url', 'draft'
         ]).rename(columns={
             'tag_name': 'version',
             'published_at': 'release_date',
             'html_url': 'link'
         })
+        # Ignore DRAFT releases (which don't yet have a release date)
+        releases_df = releases_df.drop(releases_df[releases_df['draft'] == True].index).drop(columns=['draft'])
 
         releases_df.insert(0, 'product_id', f"{owner}/{repo}")  # Derive product_id and make it the first column
         releases_df.release_date = pandas.to_datetime(releases_df.release_date, infer_datetime_format=True)
