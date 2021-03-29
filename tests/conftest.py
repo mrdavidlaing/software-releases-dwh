@@ -1,6 +1,9 @@
 import glob
 import os
+from pathlib import Path
 
+from sqlalchemy import create_engine
+from alembic import command, config
 import pytest
 from dagster import file_relative_path, ModeDefinition
 
@@ -35,3 +38,21 @@ def cleanup_datalake(request):
     remove_test_assets()  # Cleanup before tests run
     yield
     remove_test_assets()  # Cleanup after tests run
+
+
+class AlembicCmdOpts:
+    x = {}
+
+
+@pytest.fixture()
+def in_memory_sqlite_datamart_connection():
+    engine = create_engine('sqlite:///:memory:')
+    alembic_ini_path = Path(__file__).resolve().parent.parent.joinpath('alembic.ini')
+    cfg = config.Config(alembic_ini_path)
+    cfg.set_main_option('script_location', str(Path(__file__).resolve().parent.parent.joinpath('schema').resolve()))
+    setattr(cfg, "cmd_opts", AlembicCmdOpts)
+    cfg.cmd_opts.x = {"include-seed-data=true"}
+    with engine.begin() as connection:
+        cfg.attributes['connection'] = connection
+        command.upgrade(cfg, "head")
+        yield connection

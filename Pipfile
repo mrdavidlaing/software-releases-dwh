@@ -8,14 +8,18 @@ dagster = "*"
 dagit = "*"
 dagster-ge = "*"
 dagster-pandas = "*"
-dagster-gcp = "*"
 dagster-postgres = "*"
+dagster-k8s = "*"
+dagster-celery-k8s = "*"
+dagster-celery = {extras = ["kubernetes"], version = "*"}
+dagster-gcp = "*"
 importlib-metadata = "~=2.1.1"
 jupyter = "*"
 ghapi = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
 google-cloud-storage = "*"
+alembic = "*"
 
 [dev-packages]
 pytest = "*"
@@ -26,3 +30,6 @@ python_version = "3.7"
 
 [pipenv]
 allow_prereleases = true # Needed for dagster-ge
+
+[scripts]
+init_local_dwh = "pipenv run alembic -x include-seed-data=true upgrade head"
