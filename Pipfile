@@ -4,22 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-dagster = "*"
-dagit = "*"
-dagster-ge = "*"
-dagster-pandas = "*"
-dagster-postgres = "*"
-dagster-k8s = "*"
-dagster-celery-k8s = "*"
-dagster-celery = {extras = ["kubernetes"], version = "*"}
-dagster-gcp = "*"
-importlib-metadata = "~=2.1.1"
+dagster = "0.11.2"
+dagster-graphql = "0.11.2"
+dagit = "0.11.2"
+dagster-pandas = "0.11.2"
+dagster-postgres = "0.11.2"
+dagster-gcp = "0.11.2"
+dagster-ge = "0.11.2"
+ghapi = "0.1.16"
 jupyter = "*"
-ghapi = "*"
-sqlalchemy = "*"
-psycopg2-binary = "*"
-google-cloud-storage = "*"
-alembic = "*"
+ipykernel = "*"
+typing-extensions = "*"
 
 [dev-packages]
 pytest = "*"
@@ -28,8 +23,9 @@ pylint = "*"
 [requires]
 python_version = "3.7"
 
-[pipenv]
-allow_prereleases = true # Needed for dagster-ge
-
 [scripts]
+dagit_local = 'pipenv run dagit -w workspace.yaml'
+dagit_gcp = 'env DAGSTER_HOME="$PWD/dagster_instances/gcp-cloud-run-europe-west1" pipenv run dagit -w workspace.yaml'
 init_local_dwh = "pipenv run alembic -x include-seed-data=true upgrade head"
+create_requirements_txt = 'pipenv lock --requirements > requirements.txt'
+build_docker_image = 'pipenv run create_requirements_txt && docker build'

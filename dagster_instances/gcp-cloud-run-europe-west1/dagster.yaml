@@ -1,0 +1,23 @@
+scheduler:
+  module: dagster.core.scheduler
+  class: DagsterDaemonScheduler
+run_storage:
+  module: dagster_postgres.run_storage
+  class: PostgresRunStorage
+  config:
+    postgres_url:
+      env: GCP_DAGSTER_POSTGRES_CONNECTION_URI
+event_log_storage:
+  module: dagster_postgres.event_log
+  class: PostgresEventLogStorage
+  config:
+    postgres_url:
+      env: GCP_DAGSTER_POSTGRES_CONNECTION_URI
+schedule_storage:
+  module: dagster_postgres.schedule_storage
+  class: PostgresScheduleStorage
+  config:
+    postgres_url:
+      env: GCP_DAGSTER_POSTGRES_CONNECTION_URI
+telemetry:
+  enabled: true
