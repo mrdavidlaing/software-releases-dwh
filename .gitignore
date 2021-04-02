@@ -136,3 +136,6 @@ secrets/
 
 #Whaler
 _whaler/
+
+#Temporary files
+tmp/
