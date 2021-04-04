@@ -24,6 +24,7 @@ logger = logging.getLogger(f"alembic.{Path(__file__).name}")
 def upgrade():
     op.create_table(
         'release',
+        sa.Column('at_date', sa.Date(), nullable=False),
         sa.Column('product_id', sa.String(50), nullable=False),
         sa.Column('version', sa.String(10), nullable=False),
         sa.Column('name', sa.String(10)),

@@ -4,17 +4,21 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-dagster = "0.11.2"
-dagster-graphql = "0.11.2"
-dagit = "0.11.2"
-dagster-pandas = "0.11.2"
-dagster-postgres = "0.11.2"
-dagster-gcp = "0.11.2"
-dagster-ge = "0.11.2"
-ghapi = "0.1.16"
+importlib-metadata = "~=2.1.1"
+typing-extensions = "*"
+dagster = ">=0.11.3"
+dagster-graphql = ">=0.11.3"
+dagit = ">=0.11.3"
+dagster-pandas = ">=0.11.3"
+dagster-postgres = ">=0.11.3"
+dagster-gcp = ">=0.11.3"
+dagster-ge = ">=0.11.3"
+great-expectations  = "== 0.13.16"
+alembic = ">=1.5.8"
+sqlalchemy = ">=1.4.4"
+ghapi = ">=0.1.16"
 jupyter = "*"
 ipykernel = "*"
-typing-extensions = "*"
 
 [dev-packages]
 pytest = "*"
@@ -24,8 +28,8 @@ pylint = "*"
 python_version = "3.7"
 
 [scripts]
+tests = "pipenv run pytest tests/"
 dagit_local = 'pipenv run dagit -w workspace.yaml'
-dagit_gcp = 'env DAGSTER_HOME="$PWD/dagster_instances/gcp-cloud-run-europe-west1" pipenv run dagit -w workspace.yaml'
-init_local_dwh = "pipenv run alembic -x include-seed-data=true upgrade head"
+dagit_gcp = 'env DAGSTER_HOME="$PWD/dagster_instances/gcp-cloud-run-europe-west1" pipenv run dagit -p 8080 -w workspace.yaml'
 create_requirements_txt = 'pipenv lock --requirements > requirements.txt'
 build_docker_image = 'pipenv run create_requirements_txt && docker build'

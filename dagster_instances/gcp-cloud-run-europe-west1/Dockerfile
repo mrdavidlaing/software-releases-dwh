@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=python:3.7-slim
 FROM "${BASE_IMAGE}"
 
-ARG DAGSTER_VERSION=0.11.2
+ARG DAGSTER_VERSION=0.11.3
 
 # ==> Dagster base layer
 RUN echo "==> Adding Dagster base layer" \
@@ -41,6 +41,6 @@ ENV DAGSTER_WORKSPACE=/opt/dagster/workspace/
 COPY . $DAGSTER_WORKSPACE
 WORKDIR $DAGSTER_WORKSPACE
 
-# ==> Starts a simple flash webserver on 8080 that executes pipelines via /execute_pipeline?pipeline=<pipline name>
+# ==> Starts a simple webserver on 8080 that executes pipelines via /execute_pipeline?pipeline=<pipline name>
 EXPOSE 8080
 CMD python web_runner.py

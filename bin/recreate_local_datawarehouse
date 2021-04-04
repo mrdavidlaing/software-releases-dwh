@@ -16,15 +16,15 @@ set -o pipefail         # Use last non-zero exit code in a pipeline
 # OUTS: None
 function script_usage() {
     cat << EOF
-Builds & updates docker container being used to run Dagster Cloud Run deployment
+Recreates local datalake
 
-Dependencies: gcloud, docker
+Dependencies: pipenv
 Usage:
-     -sb|--skip-build           Skips building & pushing a new version of the Dagster container
+     -sdl|--skip-datalake       Skips re-building datalake
+     -sdm|--skip-datamart       Skips re-building datamart
      -h|--help                  Displays this help
      -v|--verbose               Displays verbose output
      -nc|--no-colour            Disables colour output
-     -cr|--cron                 Run silently unless we encounter an error
 EOF
 }
 
@@ -37,8 +37,11 @@ function parse_params() {
         param="$1"
         shift
         case $param in
-            -sb | --skip-build)
-                skip_build=true
+            -sdl | --skip-datalake)
+                skip_datalake=true
+                ;;
+            -sdm | --skip-datamart)
+                skip_datamart=true
                 ;;
             -h | --help)
                 script_usage
@@ -50,9 +53,6 @@ function parse_params() {
             -nc | --no-colour)
                 no_colour=true
                 ;;
-            -cr | --cron)
-                cron=true
-                ;;
             *)
                 script_exit "Invalid parameter was provided: $param" 1
                 ;;
@@ -60,19 +60,6 @@ function parse_params() {
     done
 }
 
-function build_and_push_container() {
-  cal_version=$(date +'%Y-%m-%d.%s')
-
-  pretty_print "====> Building & pushing new image: eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster-cloudrun:$cal_version" "$ta_bold"
-  pushd $(realpath "$script_dir/../")
-    PIPENV_VERBOSITY=-1 pipenv lock --requirements > tmp/requirements.txt
-    docker build -f "dagster_instances/gcp-cloud-run-europe-west1/Dockerfile" . \
-    --tag eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster-cloudrun:$cal_version \
-    --tag eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster-cloudrun:latest
-  popd
-  docker push eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster-cloudrun:$cal_version
-  docker push eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster-cloudrun:latest
-}
 
 # DESC: Main control flow
 # ARGS: $@ (optional): Arguments provided to the script
@@ -88,17 +75,22 @@ function main() {
     cron_init
     colour_init
 
-    check_binary gcloud "halt-if-not-exists"
-    check_binary docker "halt-if-not-exists"
+    check_binary pipenv "halt-if-not-exists"
 
-    if [ -z "${skip_build-}" ]; then # If skip_build NOT set
-      build_and_push_container
+    export PIPENV_VERBOSITY=-1
+    if [[ -z ${skip_datalake-} ]]; then # If skip_datalake NOT set
+          pretty_print "====> Recreating local datalake..." "$ta_bold"
+          pipenv run alembic --name datalake downgrade base
+          pipenv run alembic --name datalake -x include-seed-data=true upgrade head
+          pretty_print "   => datalake recreated successfully" "$fg_green"
     fi
-    pretty_print "====> Updating GCP Cloud Run deployment..." "$ta_bold"
-    gcloud --project mrdavidlaing run deploy software-releases-dwh-dagster \
-      --region europe-west1 --platform managed --image eu.gcr.io/mrdavidlaing/software-releases-dwh-dagster-cloudrun:latest
 
-    pretty_print "====> Done!" "$ta_bold"
+    if [[ -z "${skip_datamart-}" ]]; then # If skip_datamart NOT set
+          pretty_print "====> Recreating local datamart..." "$ta_bold"
+          pipenv run alembic --name datamart downgrade base
+          pipenv run alembic --name datamart -x include-seed-data=true upgrade head
+          pretty_print "   => datamart recreated successfully" "$fg_green"
+    fi
 }
 
 # Make it rain

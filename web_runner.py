@@ -12,11 +12,12 @@ def execute_ingest_pipeline():
     yield 'Starting to execute ingest_pipeline...'
     try:
         dagster_inst = DagsterInstance.get()
-        execute_pipeline(
+        result = execute_pipeline(
             pipeline=reconstructable(ingest_pipeline),
-            preset="GCP",
+            preset="gcp",
             instance=dagster_inst,
         )
+        assert result.success
         yield 'Done!'
     except Exception as e:
         yield 'Failed:'

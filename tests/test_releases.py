@@ -1,15 +1,12 @@
 from datetime import datetime, timezone
 
 import pandas
-import pytest
 from dagster import execute_solid
 
+from pipelines import inmemory_mode, inmemory_run_config
 from releases import add_releases_to_lake
-from tests.conftest import test_mode, test_run_config
 
 
-@pytest.mark.usefixtures("cleanup_datalake")
-@pytest.mark.asset_type("test-releases")
 def test_add_releases_to_lake():
     sample_releases = pandas.DataFrame.from_dict({
         'product_id': ['knative/serving', 'knative/serving', 'knative/serving'],
@@ -24,21 +21,10 @@ def test_add_releases_to_lake():
     result = execute_solid(
         add_releases_to_lake,
         input_values={'releases': sample_releases},
-        mode_def=test_mode,
-        run_config={
-            **test_run_config,
-            **{
-                "solids": {
-                    "add_releases_to_lake": {
-                        "config": {
-                            "asset_type": "test-releases"
-                        }
-                    }
-                }
-            }
-        }
+        mode_def=inmemory_mode,
+        run_config=inmemory_run_config,
     )
 
     assert result.success
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    assert f'test-releases_{today}.csv' in result.output_value('asset_path')
+    assert f'release_{today}.csv' in result.output_value('asset_path')
