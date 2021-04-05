@@ -9,6 +9,11 @@ def test_fetch_kubernetes_releases():
     def fetch_kubernetes_releases(_):
         return {'owner': 'kubernetes', "repo": "kubernetes"}
 
-    res = execute_solid(fetch_kubernetes_releases, mode_def=inmemory_mode, run_config=inmemory_run_config)
+    res = execute_solid(
+        fetch_github_releases,
+        input_values={'owner_repo': "kubernetes/kubernetes"},
+        mode_def=inmemory_mode,
+        run_config=inmemory_run_config
+    )
     assert res.success
     assert len(res.output_value('releases')) >= 3, "kubernetes/kubernetes should have 3 mocked releases"

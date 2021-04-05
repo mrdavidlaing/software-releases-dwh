@@ -50,6 +50,19 @@ gcp_preset = PresetDefinition(
                 }
             }
         },
+        "solids": {
+            "fan_out_fetch_github_releases": {
+                "config": {
+                    "repos": [
+                        "kubernetes/kubernetes",
+                        "dagster-io/dagster",
+                        "knative/serving",
+                        "cloudfoundry/cf-deployment",
+                        "cloudfoundry/cf-for-k8s"
+                    ]
+                }
+            }
+        },
         "execution": {"multiprocess": {"config": {"max_concurrent": 0}}},  # 0 -> Autodetect #CPU cores
         "loggers": {"console": {"config": {"log_level": "INFO"}}},
     },

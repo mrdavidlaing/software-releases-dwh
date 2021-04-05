@@ -27,7 +27,7 @@ inmemory_run_config = {
             "config": {
                 "ge_root_dir": abspath(file_relative_path(__file__, "../great_expectations"))
             }
-        }
+        },
     },
     "execution": {"in_process": {"config": {"retries": {"disabled": None}}}},
     "loggers": {"console": {"config": {"log_level": "INFO"}}},
