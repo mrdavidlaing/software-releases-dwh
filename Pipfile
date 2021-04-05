@@ -29,7 +29,5 @@ python_version = "3.7"
 
 [scripts]
 tests = "pipenv run pytest tests/"
-dagit_local = 'pipenv run dagit -w workspace.yaml'
-dagit_gcp = 'env DAGSTER_HOME="$PWD/dagster_instances/gcp-cloud-run-europe-west1" pipenv run dagit -p 8080 -w workspace.yaml'
 create_requirements_txt = 'pipenv lock --requirements > requirements.txt'
 build_docker_image = 'pipenv run create_requirements_txt && docker build'

@@ -128,6 +128,16 @@ function script_init() {
     readonly ta_none="$(tput sgr0 2> /dev/null || true)"
 }
 
+# DESC: Resolve relative path to absolute directory path (including symlinks)
+# ARGS: $1: directory path to resolve
+# OUTS: absolute path
+# NOTE: Source: https://stackoverflow.com/a/7126780/13238
+function resolve_dir()
+{
+cd "$1" 2>/dev/null || return $?  # cd to desired directory; if fail, quell any error messages but return exit status
+echo "$(pwd -P)" # output full, link-resolved path
+}
+
 # DESC: Initialise colour variables
 # ARGS: None
 # OUTS: Read-only variables with ANSI control codes
