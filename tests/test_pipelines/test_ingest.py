@@ -1,12 +1,12 @@
 from dagster import DagsterInstance, execute_pipeline, reconstructable
 
-from pipelines import ingest_pipeline
+from src.pipelines.ingest import ingest_pipeline
 
 
 def test_ingest_pipeline_e2e():
     result = execute_pipeline(
         pipeline=reconstructable(ingest_pipeline),
-        preset="local_inmemory",
+        preset="inmemory",
         instance=DagsterInstance.get(),
     )
 

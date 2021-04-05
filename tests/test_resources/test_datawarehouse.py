@@ -3,7 +3,7 @@ import datetime
 import pandas
 from dagster import solid, pipeline, DagsterInstance, execute_pipeline
 
-from pipelines import inmemory_mode, inmemory_preset
+from src.pipelines.settings_inmemory import inmemory_mode, inmemory_preset
 
 
 @solid(required_resource_keys={"datawarehouse"})
@@ -44,7 +44,7 @@ def add_and_retrieve_pipeline():
 def test_fs_datalake_resource():
     result = execute_pipeline(
         pipeline=add_and_retrieve_pipeline,
-        preset="local_inmemory",
+        preset="inmemory",
         instance=DagsterInstance.get(),
     )
 

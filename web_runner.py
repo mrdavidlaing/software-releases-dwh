@@ -3,7 +3,7 @@ import os
 from dagster import DagsterInstance, execute_pipeline, reconstructable
 from flask import Flask, request, abort, Response, stream_with_context
 
-from pipelines import ingest_pipeline
+from src.pipelines.ingest import ingest_pipeline
 
 app = Flask(__name__)
 

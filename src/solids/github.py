@@ -1,11 +1,7 @@
-import os
-
-import ghapi.core
 import pandas
 from dagster import solid, Field, OutputDefinition, Output
-from ghapi.page import pages
 
-from releases import ReleasesDataFrame
+from src.solids.releases import ReleasesDataFrame
 
 
 @solid(

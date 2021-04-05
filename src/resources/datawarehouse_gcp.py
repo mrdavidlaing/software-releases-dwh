@@ -1,14 +1,11 @@
-import os
 from datetime import datetime
-from io import StringIO
 
-import pandas
 from dagster import resource, Field, StringSource
 from dagster_pandas import DataFrame
 from google.cloud import storage
-from sqlalchemy import create_engine
 
-from resources.datawarehouse import DatawarehouseInfo
+from src.resources.datawarehouse import DatawarehouseInfo
+
 
 @resource(
     {
@@ -32,7 +29,6 @@ def gcp_datawarehouse_resource(init_context):
 
         return f"gs://{bucket.name}/{csv_filename}"
 
-
     def _replace_partition(df: DataFrame, schema: str, table: str, at_date: datetime) -> str:
         raise NotImplemented()
         # df['at_date'] = at_date
@@ -46,7 +42,7 @@ def gcp_datawarehouse_resource(init_context):
         # df.to_sql(fq_table_name, con=_dwh.connection, index=False, if_exists='append')
         # return f"{fq_table_name} WHERE at_date={at_date}"
 
-    #TODO: init gcp connection
+    # TODO: init gcp connection
     connection = None
     yield DatawarehouseInfo(
         datalake_uri=f"gs://{bucket.name}",

@@ -1,7 +1,7 @@
 from dagster import execute_solid, configured
 
-from github import fetch_github_releases
-from pipelines import inmemory_mode, inmemory_run_config
+from src.pipelines.settings_inmemory import inmemory_mode, inmemory_run_config
+from src.solids.github import fetch_github_releases
 
 
 def test_fetch_kubernetes_releases():

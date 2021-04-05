@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 import pandas
 from dagster import execute_solid
 
-from pipelines import inmemory_mode, inmemory_run_config
-from releases import add_releases_to_lake
+from src.pipelines.settings_inmemory import inmemory_mode, inmemory_run_config
+from src.solids.releases import add_releases_to_lake
 
 
 def test_add_releases_to_lake():

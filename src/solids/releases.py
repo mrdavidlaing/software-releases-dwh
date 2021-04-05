@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pandas
 from dagster import solid, OutputDefinition, String, AssetMaterialization, EventMetadataEntry, Output, \
-    InputDefinition, Field, Dict, composite_solid, List, AssetKey, Any
+    InputDefinition, Dict, composite_solid, List, AssetKey, Any
 from dagster_ge import ge_validation_solid_factory
 from dagster_pandas import create_dagster_pandas_dataframe_type, PandasColumn
 

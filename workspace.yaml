@@ -1,4 +1,4 @@
 load_from:
   - python_file:
-      relative_path: pipelines.py
+      relative_path: src/repository.py
       working_directory: .
