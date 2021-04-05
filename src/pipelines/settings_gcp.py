@@ -57,8 +57,11 @@ gcp_preset = PresetDefinition(
                         "kubernetes/kubernetes",
                         "dagster-io/dagster",
                         "knative/serving",
+                        "knative/eventing",
                         "cloudfoundry/cf-deployment",
-                        "cloudfoundry/cf-for-k8s"
+                        "cloudfoundry/cf-for-k8s",
+                        "etcd-io/etcd",
+                        "docker/engine",
                     ]
                 }
             }
